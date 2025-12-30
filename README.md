@@ -1,47 +1,41 @@
 # Traffic Simulation Application
 
-Cette application permet de simuler et monitorer la circulation et de réguler les feux de circulation à un carrefour.
 
-## Correction du problème d'accessibilité
+## Description
+Cette application est un système de monitoring et de régulation intelligente du trafic routier. Elle utilise la vision par ordinateur pour analyser des flux vidéos de carrefours en temps réel, compter les véhicules et ajuster dynamiquement la durée des feux de circulation pour réduire les embouteillages.
 
-L'application rencontrait un problème d'erreur d'assertion dans OpenCV avec la gestion des threads, provoquant un crash de l'application. Ce problème a été résolu en :
+## Fonctionnalités Clés
+Détection Multi-objets : Identification en temps réel des voitures, camions, bus et motos.
 
-1. Désactivant le multithreading interne d'OpenCV
-2. Ajoutant des locks pour protéger l'accès aux ressources vidéo
-3. Améliorant la gestion des erreurs
-4. Optimisant la consommation de mémoire
+Tracking (Suivi) : Attribution d'identifiants uniques aux véhicules pour un comptage précis.
+
+Gestion Adaptative des Feux : Logique de contrôle qui donne la priorité aux voies les plus encombrées.
+
+Interface Dashboard : Visualisation en direct du flux vidéo traité et des statistiques de trafic via une interface web.
+
+## Architecture du Projet
+L'application est structurée de manière modulaire :
+
+app.py : Point d'entrée. Gère le serveur Flask, le streaming vidéo et les routes de l'interface utilisateur.
+
+tracker.py : Moteur d'IA. Implémente le suivi d'objets pour maintenir la continuité de détection entre les frames.
+
+traffic_manager.py : Cerveau logique. Analyse les données du tracker pour décider de l'état des feux (Rouge/Vert) selon des seuils de densité.
+
+static/ & templates/ : Ressources frontend (CSS/JS) et vues HTML pour le tableau de bord.
+
 
 ## Installation
 
-1. Assurez-vous que Python 3.8 ou supérieur est installé
+1. Python 3.8 ou supérieur est installé
 2. Installez les dépendances :
 ```
 pip install -r requirements.txt
 ```
 
-## Démarrage de l'application
 
-### Méthode recommandée
-Pour démarrer l'application correctement, utilisez le script `start_app.bat` qui configure les variables d'environnement nécessaires pour éviter les problèmes de threading OpenCV :
-
-```
-start_app.bat
-```
-
-### Méthode alternative
-Ou démarrez directement l'application Python :
-
-```
 python app.py
 ```
 
 L'application sera accessible à l'adresse : http://localhost:5000
-
-## Structure des fichiers
-
-- `app.py`: Application principale Flask
-- `tracker.py`: Contient le système de suivi d'objets
-- `traffic_manager.py`: Gère la logique de contrôle des feux
-- `static/`: Contient les fichiers vidéos et ressources
-- `templates/`: Contient les templates HTML de l'application
 
