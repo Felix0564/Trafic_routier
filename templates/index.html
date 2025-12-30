@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Régulation du Trafic</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(to right, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            font-weight: bold;
+            border-radius: 12px 12px 0 0 !important;
+            border: none;
+            padding: 12px 20px;
+        }
+        
+        .video-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            background-color: #000;
+            margin-bottom: 20px;
+            aspect-ratio: 16/10;
+        }
+        
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 0;
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #2a5298;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1060;
+        }
+        
+        .table-container {
+            max-height: 350px;
+            overflow-y: auto;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(30, 60, 114, 0.05);
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 0;
+            margin-top: 30px;
+        }
+        
+        .direction-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: white;
+            margin-right: 5px;
+        }
+        
+        .direction-nord {
+            background-color: #ff9800;
+        }
+        
+        .direction-sud {
+            background-color: #4caf50;
+        }
+        
+        .direction-est {
+            background-color: #2196f3;
+        }
+        
+        .direction-ouest {
+            background-color: #f44336;
+        }
+        
+        .speed-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .speed-low {
+            background-color: #4caf50;
+        }
+        
+        .speed-medium {
+            background-color: #ff9800;
+        }
+        
+        .speed-high {
+            background-color: #f44336;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* Styles pour les feux de circulation */
+        .traffic-light-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .traffic-light {
+            width: 100px;
+            height: 250px;
+            background-color: #333;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        
+        .light {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #555;
+            margin: 5px 0;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .light.red.active {
+            background-color: #ff5252;
+            box-shadow: 0 0 20px #ff5252;
+        }
+        
+        .light.yellow.active {
+            background-color: #ffeb3b;
+            box-shadow: 0 0 20px #ffeb3b;
+        }
+        
+        .light.green.active {
+            background-color: #4caf50;
+            box-shadow: 0 0 20px #4caf50;
+        }
+        
+        .traffic-direction {
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .timer-display {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+        
+        .traffic-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .traffic-density-indicator {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .density-bar {
+            height: 100%;
+            background: linear-gradient(to right, #4caf50, #ff9800, #f44336);
+            transition: width 0.5s ease;
+        }
+        
+        .density-label {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        /* Styles pour la représentation du carrefour */
+        .intersection-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .intersection-layout {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+        }
+        
+        .traffic-direction-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .north {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .south {
+            grid-column: 2;
+            grid-row: 3;
+        }
+        
+        .east {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        
+        .west {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        .intersection-center {
+            grid-column: 2;
+            grid-row: 2;
+            background-color: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .mini-traffic-light {
+            display: flex;
+            flex-direction: column;
+            background-color: #333;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .mini-traffic-light .light {
+            width: 20px;
+            height: 20px;
+            margin: 3px;
+        }
+        
+        .direction-label {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .timer-badge {
+            background-color: #333;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        /* Styles pour le tableau des feux */
+        .traffic-stats {
+            padding: 15px;
+        }
+        
+        /* Styles pour les badges d'état */
+        #north-state-badge, #south-state-badge, #east-state-badge, #west-state-badge {
+            width: 60px;
+        }
+        
+        #north-state-badge:contains('Vert'), 
+        #south-state-badge:contains('Vert'), 
+        #east-state-badge:contains('Vert'), 
+        #west-state-badge:contains('Vert') {
+            background-color: #4caf50;
+        }
+        
+        #north-state-badge:contains('Rouge'), 
+        #south-state-badge:contains('Rouge'), 
+        #east-state-badge:contains('Rouge'), 
+        #west-state-badge:contains('Rouge') {
+            background-color: #f44336;
+        }
+        
+        #north-state-badge:contains('Orange'), 
+        #south-state-badge:contains('Orange'), 
+        #east-state-badge:contains('Orange'), 
+        #west-state-badge:contains('Orange') {
+            background-color: #ff9800;
+        }
+        
+        /* Animation pour les routes */
+        .road {
+            position: absolute;
+            background-color: #555;
+        }
+        
+        .road-horizontal {
+            height: 20%;
+            width: 100%;
+            top: 40%;
+        }
+        
+        .road-vertical {
+            width: 20%;
+            height: 100%;
+            left: 40%;
+        }
+        
+        .road-marking {
+            position: absolute;
+            background-color: white;
+        }
+        
+        .road-marking-horizontal {
+            height: 2px;
+            width: 10px;
+            top: 50%;
+            animation: road-marking-horizontal 2s linear infinite;
+        }
+        
+        .road-marking-vertical {
+            width: 2px;
+            height: 10px;
+            left: 50%;
+            animation: road-marking-vertical 2s linear infinite;
+        }
+        
+        @keyframes road-marking-horizontal {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes road-marking-vertical {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; box-shadow: 0 0 5px currentColor; }
+            50% { opacity: 1; box-shadow: 0 0 15px currentColor; }
+            100% { opacity: 0.7; box-shadow: 0 0 5px currentColor; }
+        }
+
+        /* Intersection visualization styles */
+        .intersection-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background-color: #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .traffic-light-position {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .north {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .south {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .east {
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+        }
+
+        .west {
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+        }
+
+        .traffic-light {
+            display: flex;
+            flex-direction: column;
+            background-color: #222;
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .light {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 5px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .red {
+            background-color: #600;
+        }
+
+        .orange {
+            background-color: #630;
+        }
+
+        .green {
+            background-color: #060;
+        }
+
+        .red.active {
+            background-color: #f00;
+            box-shadow: 0 0 15px #f00;
+        }
+
+        .orange.active {
+            background-color: #fa0;
+            box-shadow: 0 0 15px #fa0;
+        }
+
+        .green.active {
+            background-color: #0f0;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        .traffic-label {
+            color: white;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .traffic-density {
+            color: #aaa;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .intersection-roads {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .road {
+            position: absolute;
+            background-color: #555;
+        }
+
+        .horizontal {
+            width: 100%;
+            height: 100px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .vertical {
+            height: 100%;
+            width: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .intersection-center {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #555;
+        }
+
+        /* Manual controls styling */
+        .manual-controls {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .light-control-group {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .light-control-group:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="m-0"><i class="fas fa-traffic-light me-2"></i>Système de Régulation du Trafic</h1>
+                <div>
+                    <span class="badge bg-success" id="status-badge">
+                        <i class="fas fa-circle-notch fa-spin me-1" id="status-icon"></i>
+                        <span id="status-text">Traitement en cours</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Contrôles globaux -->
+        <div class="row mb-3">
+            <div class="col-12 d-flex justify-content-end">
+                <button class="btn btn-success me-2" id="startAllBtn">
+                    <i class="fas fa-play me-1"></i>Tout démarrer
+                </button>
+                <button class="btn btn-danger" id="stopAllBtn">
+                    <i class="fas fa-stop me-1"></i>Tout arrêter
+                </button>
+            </div>
+        </div>
+        
+        <!-- Vidéos individuelles -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-arrow-down me-2 text-warning"></i>NORD</div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1 video-control" data-direction="nord" data-action="start">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger video-control" data-direction="nord" data-action="stop">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="video-container position-relative" style="height: 200px;">
+                            <img src="{{ url_for('video_feed_nord') }}" class="video-feed" alt="Vidéo Nord">
+                            <div class="video-overlay" id="nord-overlay">
+                                <span id="nord-count">0</span> objets
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-arrow-up me-2 text-success"></i>SUD</div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1 video-control" data-direction="sud" data-action="start">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger video-control" data-direction="sud" data-action="stop">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="video-container position-relative" style="height: 200px;">
+                            <img src="{{ url_for('video_feed_sud') }}" class="video-feed" alt="Vidéo Sud">
+                            <div class="video-overlay" id="sud-overlay">
+                                <span id="sud-count">0</span> objets
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-arrow-right me-2 text-primary"></i>EST</div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1 video-control" data-direction="est" data-action="start">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger video-control" data-direction="est" data-action="stop">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="video-container position-relative" style="height: 200px;">
+                            <img src="{{ url_for('video_feed_est') }}" class="video-feed" alt="Vidéo Est">
+                            <div class="video-overlay" id="est-overlay">
+                                <span id="est-count">0</span> objets
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-arrow-left me-2 text-danger"></i>OUEST</div>
+                        <div>
+                            <button class="btn btn-sm btn-success me-1 video-control" data-direction="ouest" data-action="start">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger video-control" data-direction="ouest" data-action="stop">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="video-container position-relative" style="height: 200px;">
+                            <img src="{{ url_for('video_feed_ouest') }}" class="video-feed" alt="Vidéo Ouest">
+                            <div class="video-overlay" id="ouest-overlay">
+                                <span id="ouest-count">0</span> objets
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-2"></i>Statistiques de trafic
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-container">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                                <div class="stat-label">Total véhicules</div>
+                                <div class="stat-value" id="total-count">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <div class="stat-label">Vitesse moyenne</div>
+                                <div class="stat-value" id="avg-speed">0 km/h</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-road"></i>
+                                </div>
+                                <div class="stat-label">Direction la plus dense</div>
+                                <div class="stat-value" id="busiest-direction">-</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-stopwatch"></i>
+                                </div>
+                                <div class="stat-label">Véhicules actuels</div>
+                                <div class="stat-value" id="current-count">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-compass me-2"></i>Statistiques par direction
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Direction</th>
+                                        <th>Total</th>
+                                        <th>Actuels</th>
+                                        <th>Vitesse moy.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="direction-indicator direction-nord">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </div>
+                                                Nord
+                                            </div>
+                                        </td>
+                                        <td id="nord-total">0</td>
+                                        <td id="nord-current">0</td>
+                                        <td id="nord-speed">0 km/h</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="direction-indicator direction-sud">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </div>
+                                                Sud
+                                            </div>
+                                        </td>
+                                        <td id="sud-total">0</td>
+                                        <td id="sud-current">0</td>
+                                        <td id="sud-speed">0 km/h</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="direction-indicator direction-est">
+                                                    <i class="fas fa-arrow-right"></i>
+                                                </div>
+                                                Est
+                                            </div>
+                                        </td>
+                                        <td id="est-total">0</td>
+                                        <td id="est-current">0</td>
+                                        <td id="est-speed">0 km/h</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="direction-indicator direction-ouest">
+                                                    <i class="fas fa-arrow-left"></i>
+                                                </div>
+                                                Ouest
+                                            </div>
+                                        </td>
+                                        <td id="ouest-total">0</td>
+                                        <td id="ouest-current">0</td>
+                                        <td id="ouest-speed">0 km/h</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Système de feux de circulation -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-traffic-light me-2"></i>Système de régulation des feux
+                    </div>
+                    <div class="card-body">
+                        <div class="traffic-grid">
+                            <!-- Représentation du carrefour -->
+                            <div class="intersection-container">
+                                <div class="intersection-layout">
+                                    <!-- Feu Nord -->
+                                    <div class="traffic-direction-container north">
+                                        <div class="mini-traffic-light">
+                                            <div class="light red" id="north-red"></div>
+                                            <div class="light yellow" id="north-yellow"></div>
+                                            <div class="light green" id="north-green"></div>
+                                        </div>
+                                        <div class="direction-label">Nord</div>
+                                        <div class="timer-badge" id="north-timer">0s</div>
+                                    </div>
+                                    
+                                    <!-- Feu Sud -->
+                                    <div class="traffic-direction-container south">
+                                        <div class="mini-traffic-light">
+                                            <div class="light red" id="south-red"></div>
+                                            <div class="light yellow" id="south-yellow"></div>
+                                            <div class="light green" id="south-green"></div>
+                                        </div>
+                                        <div class="direction-label">Sud</div>
+                                        <div class="timer-badge" id="south-timer">0s</div>
+                                    </div>
+                                    
+                                    <!-- Feu Est -->
+                                    <div class="traffic-direction-container east">
+                                        <div class="mini-traffic-light">
+                                            <div class="light red" id="east-red"></div>
+                                            <div class="light yellow" id="east-yellow"></div>
+                                            <div class="light green" id="east-green"></div>
+                                        </div>
+                                        <div class="direction-label">Est</div>
+                                        <div class="timer-badge" id="east-timer">0s</div>
+                                    </div>
+                                    
+                                    <!-- Feu Ouest -->
+                                    <div class="traffic-direction-container west">
+                                        <div class="mini-traffic-light">
+                                            <div class="light red" id="west-red"></div>
+                                            <div class="light yellow" id="west-yellow"></div>
+                                            <div class="light green" id="west-green"></div>
+                                        </div>
+                                        <div class="direction-label">Ouest</div>
+                                        <div class="timer-badge" id="west-timer">0s</div>
+                                    </div>
+                                    
+                                    <!-- Centre du carrefour -->
+                                    <div class="intersection-center">
+                                        <i class="fas fa-car-side"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tableau des temps de feux -->
+                            <div class="traffic-stats">
+                                <h5 class="mb-3">Temps de feux par direction</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Direction</th>
+                                                <th>État</th>
+                                                <th>Temps restant</th>
+                                                <th>Durée feu vert</th>
+                                                <th>Densité trafic</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="direction-indicator direction-nord"><i class="fas fa-arrow-down"></i></span> Nord</td>
+                                                <td><span class="badge" id="north-state-badge">Rouge</span></td>
+                                                <td id="north-timer-value">0s</td>
+                                                <td id="north-green-time">10s</td>
+                                                <td>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar bg-warning" id="north-density" style="width: 0%"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="direction-indicator direction-sud"><i class="fas fa-arrow-up"></i></span> Sud</td>
+                                                <td><span class="badge" id="south-state-badge">Rouge</span></td>
+                                                <td id="south-timer-value">0s</td>
+                                                <td id="south-green-time">10s</td>
+                                                <td>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar bg-warning" id="south-density" style="width: 0%"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="direction-indicator direction-est"><i class="fas fa-arrow-right"></i></span> Est</td>
+                                                <td><span class="badge" id="east-state-badge">Rouge</span></td>
+                                                <td id="east-timer-value">0s</td>
+                                                <td id="east-green-time">10s</td>
+                                                <td>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar bg-warning" id="east-density" style="width: 0%"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="direction-indicator direction-ouest"><i class="fas fa-arrow-left"></i></span> Ouest</td>
+                                                <td><span class="badge" id="west-state-badge">Rouge</span></td>
+                                                <td id="west-timer-value">0s</td>
+                                                <td id="west-green-time">10s</td>
+                                                <td>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar bg-warning" id="west-density" style="width: 0%"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Explication de la régulation -->
+                        <div class="mt-4 p-3 bg-light border rounded">
+                            <h6><i class="fas fa-info-circle me-2"></i>Explication de la régulation</h6>
+                            <p class="mb-0" id="regulation-explanation">
+                                La durée des feux est ajustée dynamiquement en fonction de la densité du trafic dans chaque direction.
+                            </p>
+                            <p class="mt-2 mb-0" id="sync-explanation" style="font-size: 0.9em; color: #666;">
+                                <i class="fas fa-sync-alt me-1"></i> Le système optimise la régulation des feux en utilisant le temps d'arrêt de la première vidéo terminée pour synchroniser le comptage des véhicules sur toutes les directions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="text-center">
+                <p class="m-0">&copy; 2023 Système de Régulation du Trafic - Tous droits réservés</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Toast notifications -->
+    <div class="toast-container">
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="notification-toast">
+            <div class="toast-header">
+                <i class="fas fa-info-circle me-2" id="toast-icon"></i>
+                <strong class="me-auto" id="toast-title">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message">
+                Message de notification
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let statsInterval;
+        let videoStatus = {
+            'nord': true,
+            'sud': true,
+            'est': true,
+            'ouest': true
+        };
+        
+        // Fonction pour vérifier l'état des vidéos
+        function checkVideoStatus() {
+            fetch('/check_videos')
+                .then(response => response.json())
+                .then(data => {
+                    // Mettre à jour le statut des vidéos
+                    for (const direction in data) {
+                        const isActive = data[direction];
+                        
+                        // Trouver les boutons correspondants
+                        const startBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="start"]`);
+                        const stopBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="stop"]`);
+                        
+                        // Mettre à jour le statut visuel de la vidéo
+                        const overlay = document.getElementById(`${direction}-overlay`);
+                        if (overlay) {
+                            if (isActive) {
+                                overlay.style.display = 'block';
+                                overlay.style.backgroundColor = 'rgba(0, 128, 0, 0.5)'; 
+                            } else {
+                                overlay.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
+                                overlay.textContent = 'Vidéo arrêtée';
+                            }
+                        }
+                        
+                        if (startBtn && stopBtn) {
+                            // Mettre à jour l'apparence des boutons
+                            startBtn.disabled = isActive;
+                            stopBtn.disabled = !isActive;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la vérification des vidéos:', error);
+                });
+        }
+        
+        // Fonction  pour mettre à jour les statistiques
+        function updateStatsAndTraffic() {
+            console.log("Mise à jour des statistiques et du trafic");
+            
+            fetch('/get_app_state')
+                .then(response => response.json())
+                .then(data => {
+                    try {
+                        console.log("État de l'application reçu:", data);
+                        
+                       
+                        const stats = data.detection_stats;
+                        
+                        
+                        document.getElementById('total-count').textContent = 
+                            stats.nord.total + stats.sud.total + stats.est.total + stats.ouest.total;
+                        
+                        // Calculer la vitesse moyenne globale
+                        let totalSpeed = 0;
+                        let speedCount = 0;
+                        
+                        // Mise à jour les statistiques par direction
+                        for (const direction of ['nord', 'sud', 'est', 'ouest']) {
+                            const dirData = stats[direction];
+                            
+                            // Les compteurs dans le tableau des statistiques
+                            document.getElementById(`${direction}-total`).textContent = dirData.total;
+                            document.getElementById(`${direction}-current`).textContent = dirData.actuel;
+                            document.getElementById(`${direction}-speed`).textContent = `${dirData.vitesse_moyenne} km/h`;
+                            
+                            // Les compteurs dans les overlays vidéo
+                            const countElement = document.getElementById(`${direction}-count`);
+                            if (countElement) {
+                                countElement.textContent = dirData.total;
+                            }
+                            
+                            if (dirData.vitesse_moyenne > 0) {
+                                totalSpeed += dirData.vitesse_moyenne;
+                                speedCount++;
+                            }
+                        }
+                        
+                        //  la vitesse moyenne globale
+                        const avgSpeed = speedCount > 0 ? (totalSpeed / speedCount).toFixed(1) : 0;
+                        document.getElementById('avg-speed').textContent = `${avgSpeed} km/h`;
+                        
+                        // Le nombre total d'objets actuellement visibles
+                        const currentTotal = 
+                            stats.nord.actuel + 
+                            stats.sud.actuel + 
+                            stats.est.actuel + 
+                            stats.ouest.actuel;
+                        document.getElementById('current-count').textContent = currentTotal;
+                        
+                        // La direction la plus dense
+                        let maxDir = 'nord';
+                        let maxCount = stats.nord.total;
+                        
+                        for (const dir of ['sud', 'est', 'ouest']) {
+                            if (stats[dir].total > maxCount) {
+                                maxCount = stats[dir].total;
+                                maxDir = dir;
+                            }
+                        }
+                        
+                        // Traduire la direction en français
+                        const directionMap = {
+                            'nord': 'Nord',
+                            'sud': 'Sud',
+                            'est': 'Est',
+                            'ouest': 'Ouest'
+                        };
+                        
+                        document.getElementById('busiest-direction').textContent = directionMap[maxDir];
+                        
+                        // Mettre à jour l'état des feux de circulation
+                        if (data.traffic_state) {
+                            updateTrafficLights(data.traffic_state);
+                            updateTrafficState(data.traffic_state);
+                        }
+                        
+                        // Mettre à jour le statut global de l'application
+                        if (data.processing_active) {
+                            document.getElementById('status-badge').className = 'badge bg-success';
+                            document.getElementById('status-text').textContent = 'Traitement en cours';
+                            document.getElementById('status-icon').className = 'fas fa-circle-notch fa-spin me-1';
+                        } else {
+                            document.getElementById('status-badge').className = 'badge bg-secondary';
+                            document.getElementById('status-text').textContent = 'En attente';
+                            document.getElementById('status-icon').className = 'fas fa-circle me-1';
+                        }
+                        
+                        // Mettre à jour l'état des vidéos
+                        const videoStatus = data.videos_active;
+                        for (const direction in videoStatus) {
+                            const isActive = videoStatus[direction];
+                            
+                            // Trouver les boutons correspondants
+                            const startBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="start"]`);
+                            const stopBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="stop"]`);
+                            
+                            if (startBtn && stopBtn) {
+                                // Mettre à jour l'apparence des boutons
+                                startBtn.disabled = isActive;
+                                stopBtn.disabled = !isActive;
+                            }
+                            
+                            // Mise à jour visuelle de l'état de la vidéo
+                            const overlay = document.getElementById(`${direction}-overlay`);
+                            if (overlay) {
+                                if (isActive) {
+                                    overlay.style.display = 'block';
+                                    overlay.style.backgroundColor = 'rgba(0, 128, 0, 0.5)'; // Vert semi-transparent
+                                    overlay.innerHTML = `<span id="${direction}-count">${stats[direction].total}</span> objets`;
+                                } else {
+                                    overlay.style.display = 'block';
+                                    overlay.style.backgroundColor = 'rgba(255, 0, 0, 0.5)'; // Rouge semi-transparent
+                                    overlay.textContent = 'Vidéo arrêtée';
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la mise à jour de l\'interface:', error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération de l\'état de l\'application:', error);
+                });
+        }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier l'état initial des vidéos
+            checkVideoStatus();
+            
+            // Démarrer la mise à jour des statistiques
+            updateStatsAndTraffic();
+            setInterval(updateStatsAndTraffic, 1000);
+            
+            // Vérifier régulièrement l'état des vidéos
+            setInterval(checkVideoStatus, 2000);
+            
+            // Ajouter les gestionnaires d'événements pour les boutons de contrôle vidéo
+            document.querySelectorAll('.video-control').forEach(button => {
+                button.addEventListener('click', function() {
+                    const direction = this.dataset.direction;
+                    const action = this.dataset.action;
+                    controlVideo(direction, action);
+                });
+            });
+            
+            // Ajouter les gestionnaires d'événements pour les boutons généraux
+            document.getElementById('startAllBtn').addEventListener('click', function() {
+                // Désactiver le bouton pendant l'opération
+                this.disabled = true;
+                document.getElementById('stopAllBtn').disabled = true;
+                
+                // Créer un indicateur de chargement pour chaque vidéo
+                const videoContainers = document.querySelectorAll('.video-container');
+                videoContainers.forEach(container => {
+                    const loadingSpinner = document.createElement('div');
+                    loadingSpinner.className = 'position-absolute top-50 start-50 translate-middle spinner-container';
+                    loadingSpinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                    container.appendChild(loadingSpinner);
+                });
+                
+                fetch('/start_processing')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Supprimer tous les indicateurs de chargement
+                        document.querySelectorAll('.spinner-container').forEach(spinner => {
+                            if (spinner.parentNode) {
+                                spinner.parentNode.removeChild(spinner);
+                            }
+                        });
+                        
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('stopAllBtn').disabled = false;
+                        
+                        if (data.status === 'success') {
+                            showNotification(
+                                'Traitement démarré',
+                                'Toutes les vidéos ont été démarrées.',
+                                'success'
+                            );
+                            
+                            // Mettre à jour immédiatement l'état des boutons
+                            checkVideoStatus();
+                        } else {
+                            showNotification(
+                                'Information',
+                                data.message,
+                                'info'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        // Supprimer tous les indicateurs de chargement
+                        document.querySelectorAll('.spinner-container').forEach(spinner => {
+                            if (spinner.parentNode) {
+                                spinner.parentNode.removeChild(spinner);
+                            }
+                        });
+                        
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('stopAllBtn').disabled = false;
+                        
+                        console.error('Erreur lors du démarrage des vidéos:', error);
+                        showNotification(
+                            'Erreur',
+                            'Impossible de démarrer toutes les vidéos.',
+                            'error'
+                        );
+                    });
+            });
+            
+            document.getElementById('stopAllBtn').addEventListener('click', function() {
+                // Désactiver le bouton pendant l'opération
+                this.disabled = true;
+                document.getElementById('startAllBtn').disabled = true;
+                
+                fetch('/stop_processing')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('startAllBtn').disabled = false;
+                        
+                        if (data.status === 'success') {
+                            showNotification(
+                                'Traitement arrêté',
+                                'Toutes les vidéos ont été arrêtées.',
+                                'warning'
+                            );
+                            
+                            // Mettre à jour immédiatement l'état des boutons
+                            checkVideoStatus();
+                        }
+                    })
+                    .catch(error => {
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('startAllBtn').disabled = false;
+                        
+                        console.error('Erreur lors de l\'arrêt des vidéos:', error);
+                        showNotification(
+                            'Erreur',
+                            'Impossible d\'arrêter toutes les vidéos.',
+                            'error'
+                        );
+                    });
+            });
+            
+            // Ajouter une animation pour les feux
+            document.head.insertAdjacentHTML('beforeend', `
+                <style>
+                    @keyframes pulse {
+                        0% { opacity: 0.7; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0.7; }
+                    }
+                </style>
+            `);
+        });
+
+        // Fonction pour mettre à jour l'affichage des feux de circulation
+        function updateTrafficLights(trafficState) {
+            try {
+                console.log("Mise à jour des feux de circulation:", trafficState);
+                
+                // Récupérer l'état des feux pour chaque direction
+                const northState = trafficState.feux.nord.etat;
+                const southState = trafficState.feux.sud.etat;
+                const eastState = trafficState.feux.est.etat;
+                const westState = trafficState.feux.ouest.etat;
+                
+                // Debug des états des feux
+                console.log(`États des feux: Nord=${northState}, Sud=${southState}, Est=${eastState}, Ouest=${westState}`);
+                
+                // Fonction d'aide pour mettre à jour un feu
+                function updateLight(direction, state) {
+                    // Réinitialiser tous les feux de cette direction
+                    document.getElementById(`${direction}-red`).className = `light red`;
+                    document.getElementById(`${direction}-yellow`).className = `light yellow`;
+                    document.getElementById(`${direction}-green`).className = `light green`;
+                    
+                    // Activer le feu correspondant à l'état actuel
+                    if (state === 'rouge') {
+                        document.getElementById(`${direction}-red`).className = `light red active`;
+                    } else if (state === 'orange') {
+                        document.getElementById(`${direction}-yellow`).className = `light yellow active`;
+                    } else if (state === 'vert') {
+                        document.getElementById(`${direction}-green`).className = `light green active`;
+                    }
+                    
+                    // Animation pour l'état actif
+                    document.getElementById(`${direction}-${state === 'rouge' ? 'red' : state === 'orange' ? 'yellow' : 'green'}`).style.animation = 'pulse 1s infinite';
+                }
+                
+                // Mettre à jour les feux
+                updateLight('north', northState);
+                updateLight('south', southState);
+                updateLight('east', eastState);
+                updateLight('west', westState);
+                
+                // Mise à jour des timers
+                document.getElementById('north-timer').textContent = `${trafficState.feux.nord.timer}s`;
+                document.getElementById('north-timer-value').textContent = `${trafficState.feux.nord.timer}s`;
+                document.getElementById('north-green-time').textContent = `${trafficState.feux.nord.temps_vert}s`;
+                
+                document.getElementById('south-timer').textContent = `${trafficState.feux.sud.timer}s`;
+                document.getElementById('south-timer-value').textContent = `${trafficState.feux.sud.timer}s`;
+                document.getElementById('south-green-time').textContent = `${trafficState.feux.sud.temps_vert}s`;
+                
+                document.getElementById('east-timer').textContent = `${trafficState.feux.est.timer}s`;
+                document.getElementById('east-timer-value').textContent = `${trafficState.feux.est.timer}s`;
+                document.getElementById('east-green-time').textContent = `${trafficState.feux.est.temps_vert}s`;
+                
+                document.getElementById('west-timer').textContent = `${trafficState.feux.ouest.timer}s`;
+                document.getElementById('west-timer-value').textContent = `${trafficState.feux.ouest.timer}s`;
+                document.getElementById('west-green-time').textContent = `${trafficState.feux.ouest.temps_vert}s`;
+                
+                // Mise à jour des badges d'état
+                function updateStateBadge(direction, state) {
+                    const badge = document.getElementById(`${direction}-state-badge`);
+                    const displayState = state.charAt(0).toUpperCase() + state.slice(1);
+                    badge.textContent = displayState;
+                    badge.className = `badge ${state === 'vert' ? 'bg-success' : state === 'orange' ? 'bg-warning' : 'bg-danger'}`;
+                }
+                
+                updateStateBadge('north', northState);
+                updateStateBadge('south', southState);
+                updateStateBadge('east', eastState);
+                updateStateBadge('west', westState);
+                
+                // Mettre à jour les densités de trafic
+                const nordCount = trafficState.detection.nord.count || 0;
+                const sudCount = trafficState.detection.sud.count || 0;
+                const estCount = trafficState.detection.est.count || 0;
+                const ouestCount = trafficState.detection.ouest.count || 0;
+                
+                const totalCount = Math.max(1, nordCount + sudCount + estCount + ouestCount);
+                const northPercentage = Math.min(100, Math.round((nordCount / totalCount) * 100));
+                const southPercentage = Math.min(100, Math.round((sudCount / totalCount) * 100));
+                const eastPercentage = Math.min(100, Math.round((estCount / totalCount) * 100));
+                const westPercentage = Math.min(100, Math.round((ouestCount / totalCount) * 100));
+                
+                // Mettre à jour les barres de densité
+                document.getElementById('north-density').style.width = `${northPercentage}%`;
+                document.getElementById('south-density').style.width = `${southPercentage}%`;
+                document.getElementById('east-density').style.width = `${eastPercentage}%`;
+                document.getElementById('west-density').style.width = `${westPercentage}%`;
+                
+                // Déterminer les classes des barres de densité
+                const getBarClass = (percentage) => {
+                    if (percentage > 66) return 'progress-bar bg-danger';
+                    if (percentage > 33) return 'progress-bar bg-warning';
+                    return 'progress-bar bg-success';
+                };
+                
+                document.getElementById('north-density').className = getBarClass(northPercentage);
+                document.getElementById('south-density').className = getBarClass(southPercentage);
+                document.getElementById('east-density').className = getBarClass(eastPercentage);
+                document.getElementById('west-density').className = getBarClass(westPercentage);
+                
+                // Générer l'explication de la régulation
+                let explanation = 'La durée des feux est ajustée dynamiquement en fonction de la densité du trafic: ';
+                
+                // Vérifier si toutes les vidéos sont terminées (synchronisation complète)
+                const videosStatus = checkAllVideosEnded();
+                
+                // Si nous avons une promesse (résultat asynchrone)
+                if (videosStatus && typeof videosStatus.then === 'function') {
+                    videosStatus.then(status => {
+                        const isAllEnded = status && Object.values(status).every(s => !s);
+                        updateExplanation(isAllEnded);
+                    });
+                }
+                
+                // Fonction pour mettre à jour l'explication
+                function updateExplanation(isAllEnded) {
+                    if (isAllEnded) {
+                        explanation = 'Régulation optimisée basée sur les comptages finaux synchronisés: ';
+                        
+                        // Mise à jour visuelle pour indiquer la synchronisation
+                        document.getElementById('sync-explanation').style.color = '#28a745';
+                        document.getElementById('sync-explanation').innerHTML = 
+                            '<i class="fas fa-check-circle me-1"></i> Synchronisation complète! Les feux sont optimisés selon les comptages finaux.';
+                    }
+                    
+                    // Trouver la direction la plus dense
+                    const directions = [
+                        {name: 'Nord', count: nordCount, percentage: northPercentage, temps_vert: trafficState.feux.nord.temps_vert},
+                        {name: 'Sud', count: sudCount, percentage: southPercentage, temps_vert: trafficState.feux.sud.temps_vert},
+                        {name: 'Est', count: estCount, percentage: eastPercentage, temps_vert: trafficState.feux.est.temps_vert},
+                        {name: 'Ouest', count: ouestCount, percentage: westPercentage, temps_vert: trafficState.feux.ouest.temps_vert}
+                    ];
+                    
+                    directions.sort((a, b) => b.count - a.count);
+                    
+                    if (directions[0].count > 0) {
+                        explanation += `${directions[0].name} (${directions[0].count} véhicules) a la priorité avec ${directions[0].temps_vert}s de feu vert. `;
+                        
+                        if (directions[1].count > 0) {
+                            explanation += `Suivi par ${directions[1].name} (${directions[1].count} véhicules) avec ${directions[1].temps_vert}s de feu vert.`;
+                        }
+                    } else {
+                        explanation += "Aucun trafic détecté, les feux fonctionnent avec des durées standards.";
+                    }
+                    
+                    document.getElementById('regulation-explanation').textContent = explanation;
+                }
+                
+                // Appel initial de updateExplanation
+                updateExplanation(false);
+                
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour des feux de circulation:', error);
+            }
+        }
+        
+        // Fonction pour vérifier si toutes les vidéos sont terminées
+        function checkAllVideosEnded() {
+            return fetch('/check_videos')
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Erreur lors de la vérification des vidéos:', error);
+                    return null;
+                });
+        }
+        
+        // Fonction pour afficher une notification
+        function showNotification(title, message, type = 'info') {
+            const toast = document.getElementById('notification-toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Définir l'icône en fonction du type
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle me-2 text-success';
+            } else if (type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle me-2 text-danger';
+            } else if (type === 'warning') {
+                toastIcon.className = 'fas fa-exclamation-triangle me-2 text-warning';
+            } else {
+                toastIcon.className = 'fas fa-info-circle me-2 text-info';
+            }
+            
+            // Afficher la notification
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+        
+        // Fonction pour contrôler une vidéo
+        function controlVideo(direction, action) {
+            const endpoint = action === 'start' ? '/start_video' : '/stop_video';
+            
+            // Obtenir les références aux boutons
+            const startBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="start"]`);
+            const stopBtn = document.querySelector(`.video-control[data-direction="${direction}"][data-action="stop"]`);
+            
+            // Désactiver les deux boutons pendant l'opération
+            if (startBtn) startBtn.disabled = true;
+            if (stopBtn) stopBtn.disabled = true;
+            
+            // Ajouter un indicateur de chargement
+            const videoContainer = document.querySelector(`.video-container img[alt="Vidéo ${direction.charAt(0).toUpperCase() + direction.slice(1)}"]`).parentNode;
+            const loadingSpinner = document.createElement('div');
+            loadingSpinner.className = 'position-absolute top-50 start-50 translate-middle';
+            loadingSpinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+            videoContainer.appendChild(loadingSpinner);
+            
+            fetch(`${endpoint}/${direction}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Supprimer l'indicateur de chargement
+                    if (loadingSpinner && videoContainer.contains(loadingSpinner)) {
+                        videoContainer.removeChild(loadingSpinner);
+                    }
+                    
+                    if (data.status === 'success') {
+                        // Mettre à jour l'état des boutons
+                        if (action === 'start') {
+                            if (startBtn) startBtn.disabled = true;
+                            if (stopBtn) stopBtn.disabled = false;
+                        } else {
+                            if (startBtn) startBtn.disabled = false;
+                            if (stopBtn) stopBtn.disabled = true;
+                        }
+                        
+                        // Afficher une notification
+                        showNotification(
+                            `Vidéo ${direction}`,
+                            `La vidéo ${direction} a été ${action === 'start' ? 'démarrée' : 'arrêtée'}.`,
+                            'success'
+                        );
+                    } else {
+                        // En cas d'erreur, réactiver les boutons
+                        if (startBtn) startBtn.disabled = false;
+                        if (stopBtn) stopBtn.disabled = false;
+                        
+                        showNotification(
+                            'Erreur',
+                            data.message,
+                            'error'
+                        );
+                    }
+                    
+                    // Mettre à jour immédiatement l'état des vidéos
+                    checkVideoStatus();
+                })
+                .catch(error => {
+                    // Supprimer l'indicateur de chargement
+                    if (loadingSpinner && videoContainer.contains(loadingSpinner)) {
+                        videoContainer.removeChild(loadingSpinner);
+                    }
+                    
+                    // En cas d'erreur, réactiver les boutons
+                    if (startBtn) startBtn.disabled = false;
+                    if (stopBtn) stopBtn.disabled = false;
+                    
+                    console.error(`Erreur lors du contrôle de la vidéo ${direction}:`, error);
+                    showNotification(
+                        'Erreur',
+                        `Impossible de ${action === 'start' ? 'démarrer' : 'arrêter'} la vidéo ${direction}.`,
+                        'error'
+                    );
+                });
+        }
+
+        // Manual mode controls
+        $('#manualModeSwitch').change(function() {
+            const isManualMode = $(this).prop('checked');
+            
+            // Toggle manual controls panel
+            if (isManualMode) {
+                $('#manualControlsPanel').slideDown();
+            } else {
+                $('#manualControlsPanel').slideUp();
+            }
+            
+            // Send request to server to change mode
+            $.get(`/set_manual_mode/${isManualMode}`, function(data) {
+                if (data.success) {
+                    showToast(isManualMode ? 'Mode manuel activé' : 'Mode automatique activé', 'info');
+                } else {
+                    showToast('Erreur lors du changement de mode', 'danger');
+                    // Reset switch if there was an error
+                    $('#manualModeSwitch').prop('checked', !isManualMode);
+                }
+            });
+        });
+
+        // Light control buttons
+        $('.light-control').click(function() {
+            const direction = $(this).data('direction');
+            const state = $(this).data('state');
+            
+            $.get(`/set_light_state/${direction}/${state}`, function(data) {
+                if (data.success) {
+                    showToast(`Feu ${direction} changé à ${state}`, 'success');
+                } else {
+                    showToast(`Erreur: ${data.error}`, 'danger');
+                }
+            });
+        });
+
+        // Update traffic state function
+        function updateTrafficState(data) {
+            try {
+                // Mise à jour des feux de signalisation
+                updateTrafficLight('north', data.feux.nord.etat);
+                updateTrafficLight('south', data.feux.sud.etat);
+                updateTrafficLight('east', data.feux.est.etat);
+                updateTrafficLight('west', data.feux.ouest.etat);
+                
+                // Mise à jour des densités de trafic
+                $('#north-density').text(data.detection.nord.count);
+                $('#south-density').text(data.detection.sud.count);
+                $('#east-density').text(data.detection.est.count);
+                $('#west-density').text(data.detection.ouest.count);
+                
+                // Animation des feux verts
+                $('#north-green').css('animation', data.feux.nord.etat === 'vert' ? 'pulse 1s infinite' : 'none');
+                $('#south-green').css('animation', data.feux.sud.etat === 'vert' ? 'pulse 1s infinite' : 'none');
+                $('#east-green').css('animation', data.feux.est.etat === 'vert' ? 'pulse 1s infinite' : 'none');
+                $('#west-green').css('animation', data.feux.ouest.etat === 'vert' ? 'pulse 1s infinite' : 'none');
+                
+                // Mise à jour des pourcentages de densité
+                const totalCount = Math.max(1, 
+                    data.detection.nord.count + 
+                    data.detection.sud.count + 
+                    data.detection.est.count + 
+                    data.detection.ouest.count
+                );
+                
+                const northPercentage = Math.min(100, Math.round((data.detection.nord.count / totalCount) * 100));
+                const southPercentage = Math.min(100, Math.round((data.detection.sud.count / totalCount) * 100));
+                const eastPercentage = Math.min(100, Math.round((data.detection.est.count / totalCount) * 100));
+                const westPercentage = Math.min(100, Math.round((data.detection.ouest.count / totalCount) * 100));
+                
+                // Mise à jour des barres de progression
+                $('#north-density').css('width', northPercentage + '%');
+                $('#south-density').css('width', southPercentage + '%');
+                $('#east-density').css('width', eastPercentage + '%');
+                $('#west-density').css('width', westPercentage + '%');
+                
+                // Vérifier si le mode manuel a changé sur le serveur
+                const isManualMode = data.manual_mode;
+                if ($('#manualModeSwitch').prop('checked') !== isManualMode) {
+                    $('#manualModeSwitch').prop('checked', isManualMode);
+                    if (isManualMode) {
+                        $('#manualControlsPanel').slideDown();
+                    } else {
+                        $('#manualControlsPanel').slideUp();
+                    }
+                }
+                
+                // Mise à jour de l'état de la simulation
+                if (data.simulation) {
+                    const isSimulationActive = data.simulation.active;
+                    updateSimulationUI(isSimulationActive, data.simulation.scenario, data.simulation.speed);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de l\'état du trafic:', error);
+            }
+        }
+
+        // Fonction pour mettre à jour un feu de circulation
+        function updateTrafficLight(direction, state) {
+            try {
+                // Réinitialiser tous les feux
+                $(`#${direction}-red`).removeClass('active');
+                $(`#${direction}-orange`).removeClass('active');
+                $(`#${direction}-green`).removeClass('active');
+                
+                // Activer le feu correspondant à l'état actuel
+                if (state === 'rouge') {
+                    $(`#${direction}-red`).addClass('active');
+                } else if (state === 'orange') {
+                    $(`#${direction}-orange`).addClass('active');
+                } else if (state === 'vert') {
+                    $(`#${direction}-green`).addClass('active');
+                }
+            } catch (error) {
+                console.error(`Erreur lors de la mise à jour du feu ${direction}:`, error);
+            }
+        }
+
+        // Function to update simulation UI based on server state
+        function updateSimulationUI(isActive, scenario, speed) {
+            try {
+                if (isActive) {
+                    $('#startSimulationBtn').prop('disabled', true);
+                    $('#stopSimulationBtn').prop('disabled', false);
+                    $('#scenarioSelect').prop('disabled', true);
+                    $('#speedRange').prop('disabled', true);
+                    $('#simulationStatus').show();
+                    $('#simulationStatusText').text(`Simulation "${getScenarioName(scenario)}" en cours (${speed}x)`);
+                } else {
+                    $('#startSimulationBtn').prop('disabled', false);
+                    $('#stopSimulationBtn').prop('disabled', true);
+                    $('#scenarioSelect').prop('disabled', false);
+                    $('#speedRange').prop('disabled', false);
+                    $('#simulationStatus').hide();
+                }
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de l\'interface de simulation:', error);
+            }
+        }
+
+        // Obtenir le nom lisible du scénario
+        function getScenarioName(scenario) {
+            const names = {
+                'normal': 'Trafic normal',
+                'rush_hour': 'Heure de pointe',
+                'night': 'Trafic nocturne',
+                'north_congestion': 'Congestion au Nord',
+                'east_west_heavy': 'Trafic dense Est-Ouest'
+            };
+            return names[scenario] || scenario;
+        }
+
+        // Speed range input
+        $('#speedRange').on('input', function() {
+            const speed = parseFloat($(this).val()).toFixed(1);
+            $('#speedValue').text(`${speed}x`);
+        });
+
+        // Start simulation button
+        $('#startSimulationBtn').click(function() {
+            const scenario = $('#scenarioSelect').val();
+            const speed = parseFloat($('#speedRange').val());
+            
+            $.get(`/start_simulation/${scenario}?speed=${speed}`, function(data) {
+                if (data.success) {
+                    showToast(`Simulation "${getScenarioName(scenario)}" démarrée`, 'success');
+                    updateSimulationUI(true, scenario, speed);
+                } else {
+                    showToast(`Erreur: ${data.error}`, 'danger');
+                }
+            });
+        });
+
+        // Stop simulation button
+        $('#stopSimulationBtn').click(function() {
+            $.get('/stop_simulation', function(data) {
+                if (data.success) {
+                    showToast(data.message, 'info');
+                    updateSimulationUI(false);
+                } else {
+                    showToast(`Erreur: ${data.error}`, 'danger');
+                }
+            });
+        });
+
+        // Update traffic state every second
+        setInterval(updateTrafficState, 1000);
+
+        // Fonction pour afficher un toast (notification)
+        function showToast(message, type = 'info') {
+            // Utiliser la fonction showNotification pour assurer la compatibilité
+            showNotification(
+                type === 'success' ? 'Succès' : 
+                type === 'danger' ? 'Erreur' : 
+                type === 'warning' ? 'Attention' : 'Information',
+                message,
+                type === 'danger' ? 'error' : type
+            );
+        }
+        
+        // Vérification de la disponibilité des éléments DOM
+        function checkDOMElements() {
+            const elements = [
+                'north-red', 'north-yellow', 'north-green',
+                'south-red', 'south-yellow', 'south-green',
+                'east-red', 'east-yellow', 'east-green',
+                'west-red', 'west-yellow', 'west-green',
+                'nord-count', 'sud-count', 'est-count', 'ouest-count',
+                'north-density', 'south-density', 'east-density', 'west-density',
+                'regulation-explanation'
+            ];
+            
+            let missingElements = [];
+            
+            elements.forEach(id => {
+                if (!document.getElementById(id)) {
+                    missingElements.push(id);
+                    console.warn(`Élément manquant: #${id}`);
+                }
+            });
+            
+            if (missingElements.length > 0) {
+                console.warn('Éléments manquants dans le DOM. La fonctionnalité pourrait être limitée.');
+            }
+            
+            return missingElements.length === 0;
+        }
+        
+        // Initialisation améliorée
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérification des éléments DOM
+            checkDOMElements();
+            
+            // Vérifier l'état initial des vidéos
+            checkVideoStatus();
+            
+            // Démarrer la mise à jour des statistiques et des feux de circulation
+            updateStatsAndTraffic();
+            
+            // Mettre à jour plus fréquemment (500ms) pour garantir une visualisation plus fluide
+            setInterval(updateStatsAndTraffic, 500);
+            
+            // Vérifier régulièrement l'état des vidéos
+            setInterval(checkVideoStatus, 2000);
+            
+            // Vérifier l'état actuel de l'application
+            fetch('/get_app_state')
+                .then(response => response.json())
+                .then(data => {
+                    // Mettre à jour l'interface pour refléter l'état actuel
+                    if (data.processing_active) {
+                        document.getElementById('status-badge').className = 'badge bg-success';
+                        document.getElementById('status-text').textContent = 'Traitement en cours';
+                    } else {
+                        document.getElementById('status-badge').className = 'badge bg-secondary';
+                        document.getElementById('status-text').textContent = 'En attente';
+                    }
+                    
+                    // Mettre à jour immédiatement les statistiques et l'état du trafic
+                    updateStatsAndTraffic();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération de l\'état de l\'application:', error);
+                });
+            
+            // Ajouter les gestionnaires d'événements pour les boutons de contrôle vidéo
+            document.querySelectorAll('.video-control').forEach(button => {
+                button.addEventListener('click', function() {
+                    const direction = this.dataset.direction;
+                    const action = this.dataset.action;
+                    controlVideo(direction, action);
+                });
+            });
+            
+            // Ajouter les gestionnaires d'événements pour les boutons généraux
+            document.getElementById('startAllBtn').addEventListener('click', function() {
+                // Désactiver le bouton pendant l'opération
+                this.disabled = true;
+                document.getElementById('stopAllBtn').disabled = true;
+                
+                // Créer un indicateur de chargement pour chaque vidéo
+                const videoContainers = document.querySelectorAll('.video-container');
+                videoContainers.forEach(container => {
+                    const loadingSpinner = document.createElement('div');
+                    loadingSpinner.className = 'position-absolute top-50 start-50 translate-middle spinner-container';
+                    loadingSpinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                    container.appendChild(loadingSpinner);
+                });
+                
+                fetch('/start_processing')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Supprimer tous les indicateurs de chargement
+                        document.querySelectorAll('.spinner-container').forEach(spinner => {
+                            if (spinner.parentNode) {
+                                spinner.parentNode.removeChild(spinner);
+                            }
+                        });
+                        
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('stopAllBtn').disabled = false;
+                        
+                        if (data.status === 'success') {
+                            showNotification(
+                                'Traitement démarré',
+                                'Toutes les vidéos ont été démarrées.',
+                                'success'
+                            );
+                            
+                            // Mettre à jour immédiatement l'état des boutons
+                            checkVideoStatus();
+                        } else {
+                            showNotification(
+                                'Information',
+                                data.message,
+                                'info'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        // Supprimer tous les indicateurs de chargement
+                        document.querySelectorAll('.spinner-container').forEach(spinner => {
+                            if (spinner.parentNode) {
+                                spinner.parentNode.removeChild(spinner);
+                            }
+                        });
+                        
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('stopAllBtn').disabled = false;
+                        
+                        console.error('Erreur lors du démarrage des vidéos:', error);
+                        showNotification(
+                            'Erreur',
+                            'Impossible de démarrer toutes les vidéos.',
+                            'error'
+                        );
+                    });
+            });
+            
+            document.getElementById('stopAllBtn').addEventListener('click', function() {
+                // Désactiver le bouton pendant l'opération
+                this.disabled = true;
+                document.getElementById('startAllBtn').disabled = true;
+                
+                fetch('/stop_processing')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('startAllBtn').disabled = false;
+                        
+                        if (data.status === 'success') {
+                            showNotification(
+                                'Traitement arrêté',
+                                'Toutes les vidéos ont été arrêtées.',
+                                'warning'
+                            );
+                            
+                            // Mettre à jour immédiatement l'état des boutons
+                            checkVideoStatus();
+                        }
+                    })
+                    .catch(error => {
+                        // Réactiver les boutons
+                        this.disabled = false;
+                        document.getElementById('startAllBtn').disabled = false;
+                        
+                        console.error('Erreur lors de l\'arrêt des vidéos:', error);
+                        showNotification(
+                            'Erreur',
+                            'Impossible d\'arrêter toutes les vidéos.',
+                            'error'
+                        );
+                    });
+            });
+            
+            // Ajouter une animation pour les feux
+            document.head.insertAdjacentHTML('beforeend', `
+                <style>
+                    @keyframes pulse {
+                        0% { opacity: 0.7; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0.7; }
+                    }
+                </style>
+            `);
+        });
+
+        // Fonction pour mettre à jour le statut de la vidéo
+        function updateVideoStatus(direction, status) {
+            const overlay = document.getElementById(`${direction}-overlay`);
+            if (overlay) {
+                if (status === 'buffering') {
+                    overlay.style.backgroundColor = 'rgba(255, 165, 0, 0.5)';
+                    overlay.textContent = 'Mise en mémoire tampon...';
+                } else if (status === 'playing') {
+                    overlay.style.backgroundColor = 'rgba(0, 128, 0, 0.5)';
+                    overlay.textContent = '';
+                }
+            }
+        }
+
+        // Fonction pour vérifier le buffering des vidéos
+        function checkVideoBuffering() {
+            for (const direction of ['nord', 'sud', 'est', 'ouest']) {
+                const video = document.getElementById(`${direction}-video`);
+                if (video) {
+                    if (video.readyState < 3) {  // Pas assez de données
+                        updateVideoStatus(direction, 'buffering');
+                    } else {
+                        updateVideoStatus(direction, 'playing');
+                    }
+                }
+            }
+        }
+
+        // Vérifier le statut du buffering périodiquement
+        setInterval(checkVideoBuffering, 1000);
+
+        // Améliorer la gestion des erreurs de flux vidéo
+        function handleVideoError(direction) {
+            console.log(`Erreur de flux vidéo pour la direction ${direction}`);
+            updateVideoStatus(direction, 'error');
+            
+            // Tentative de reconnexion après 2 secondes
+            setTimeout(() => {
+                const video = document.getElementById(`${direction}-video`);
+                if (video) {
+                    video.load();  // Recharger la vidéo
+                }
+            }, 2000);
+        }
+
+        // Ajouter des gestionnaires d'événements pour les vidéos
+        document.addEventListener('DOMContentLoaded', function() {
+            ['nord', 'sud', 'est', 'ouest'].forEach(direction => {
+                const video = document.getElementById(`${direction}-video`);
+                if (video) {
+                    video.addEventListener('error', () => handleVideoError(direction));
+                    video.addEventListener('stalled', () => updateVideoStatus(direction, 'buffering'));
+                    video.addEventListener('waiting', () => updateVideoStatus(direction, 'buffering'));
+                    video.addEventListener('playing', () => updateVideoStatus(direction, 'playing'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

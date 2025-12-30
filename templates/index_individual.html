@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détection d'Objets en Temps Réel - Vidéos Séparées</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .video-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .video-header {
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .video-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .video-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-video-control {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-video-control:hover {
+            transform: scale(1.1);
+        }
+        
+        .btn-start {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .btn-stop {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .video-card {
+            position: relative;
+            height: 225px;
+            background: #000;
+        }
+        
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .video-status {
+            display: flex;
+            align-items: center;
+        }
+        
+        .video-status::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #f44336;
+            margin-right: 5px;
+        }
+        
+        .video-status.active::before {
+            background-color: #4caf50;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .ctrl-btn-group {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-weight: 500;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-start:hover {
+            background: linear-gradient(to right, #2a5298 0%, #1e3c72 100%);
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            background: linear-gradient(to right, #ea384d 0%, #d31027 100%);
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-reset {
+            background: linear-gradient(to right, #f2994a 0%, #f2c94c 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-reset:hover {
+            background: linear-gradient(to right, #f2c94c 0%, #f2994a 100%);
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: white;
+        }
+        
+        .icon-nord {
+            background-color: #ff9800;
+        }
+        
+        .icon-sud {
+            background-color: #4caf50;
+        }
+        
+        .icon-est {
+            background-color: #2196f3;
+        }
+        
+        .icon-ouest {
+            background-color: #f44336;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .detection-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        
+        .table-header {
+            background: linear-gradient(to right, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+        }
+        
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            color: #1e3c72;
+            font-weight: 600;
+            z-index: 1;
+        }
+        
+        tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        tr:hover {
+            background-color: rgba(30, 60, 114, 0.05);
+        }
+        
+        .direction-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+        }
+        
+        .badge-nord {
+            background-color: #ff9800;
+        }
+        
+        .badge-sud {
+            background-color: #4caf50;
+        }
+        
+        .badge-est {
+            background-color: #2196f3;
+        }
+        
+        .badge-ouest {
+            background-color: #f44336;
+        }
+        
+        .speed-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .speed-low {
+            background-color: #4caf50;
+        }
+        
+        .speed-medium {
+            background-color: #ff9800;
+        }
+        
+        .speed-high {
+            background-color: #f44336;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1060;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1e3c72;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 0;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: #4caf50;
+            box-shadow: 0 0 5px #4caf50;
+            animation: blink 1s infinite;
+        }
+        
+        .status-inactive {
+            background-color: #f44336;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .info-bar {
+            background: rgba(30, 60, 114, 0.1);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-counter {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        /* Styles pour les feux de circulation */
+        .traffic-light {
+            width: 50px;
+            height: 130px;
+            background-color: #333;
+            border-radius: 10px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 auto;
+        }
+        
+        .light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #222;
+            opacity: 0.3;
+        }
+        
+        .light.red {
+            background-color: #f44336;
+        }
+        
+        .light.orange {
+            background-color: #ff9800;
+        }
+        
+        .light.green {
+            background-color: #4caf50;
+        }
+        
+        .light.active {
+            opacity: 1;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+        
+        .traffic-light-container {
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="header text-center">
+        <div class="container">
+            <h1><i class="fas fa-video me-2"></i>Détection d'Objets en Temps Réel</h1>
+            <p>Surveillance de Carrefour avec Traitement Vidéo</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="info-bar">
+            <div>
+                <span class="status-indicator" id="statusDot"></span>
+                <span id="statusText">Inactif</span>
+            </div>
+            <div class="total-counter">
+                Total: <span id="totalCounter">0</span> objets
+            </div>
+            <div>
+                Heure: <span id="currentTime">00:00:00</span>
+            </div>
+        </div>
+
+        <div class="video-grid">
+            <!-- Nord -->
+            <div class="video-container">
+                <div class="video-header">
+                    <span class="video-title">NORD</span>
+                </div>
+                <div class="video-card">
+                    <img src="{{ url_for('video_feed_nord') }}" alt="Vidéo Nord" class="video-feed">
+                    <div class="video-info" id="info-nord">
+                        <span class="video-status">Inactif</span>
+                        <span class="video-objects">0 objets</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sud -->
+            <div class="video-container">
+                <div class="video-header">
+                    <span class="video-title">SUD</span>
+                </div>
+                <div class="video-card">
+                    <img src="{{ url_for('video_feed_sud') }}" alt="Vidéo Sud" class="video-feed">
+                    <div class="video-info" id="info-sud">
+                        <span class="video-status">Inactif</span>
+                        <span class="video-objects">0 objets</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Est -->
+            <div class="video-container">
+                <div class="video-header">
+                    <span class="video-title">EST</span>
+                </div>
+                <div class="video-card">
+                    <img src="{{ url_for('video_feed_est') }}" alt="Vidéo Est" class="video-feed">
+                    <div class="video-info" id="info-est">
+                        <span class="video-status">Inactif</span>
+                        <span class="video-objects">0 objets</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ouest -->
+            <div class="video-container">
+                <div class="video-header">
+                    <span class="video-title">OUEST</span>
+                </div>
+                <div class="video-card">
+                    <img src="{{ url_for('video_feed_ouest') }}" alt="Vidéo Ouest" class="video-feed">
+                    <div class="video-info" id="info-ouest">
+                        <span class="video-status">Inactif</span>
+                        <span class="video-objects">0 objets</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon icon-nord">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stat-value" id="northCounter">0</div>
+                <div class="stat-label">NORD</div>
+                <div class="d-flex justify-content-between mt-2">
+                    <small>Vitesse: <span id="northSpeed">0.0</span> km/h</small>
+                    <small>Actifs: <span id="northActive">0</span></small>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon icon-sud">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-value" id="southCounter">0</div>
+                <div class="stat-label">SUD</div>
+                <div class="d-flex justify-content-between mt-2">
+                    <small>Vitesse: <span id="southSpeed">0.0</span> km/h</small>
+                    <small>Actifs: <span id="southActive">0</span></small>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon icon-est">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                <div class="stat-value" id="eastCounter">0</div>
+                <div class="stat-label">EST</div>
+                <div class="d-flex justify-content-between mt-2">
+                    <small>Vitesse: <span id="eastSpeed">0.0</span> km/h</small>
+                    <small>Actifs: <span id="eastActive">0</span></small>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon icon-ouest">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <div class="stat-value" id="westCounter">0</div>
+                <div class="stat-label">OUEST</div>
+                <div class="d-flex justify-content-between mt-2">
+                    <small>Vitesse: <span id="westSpeed">0.0</span> km/h</small>
+                    <small>Actifs: <span id="westActive">0</span></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nouveaux éléments pour l'état des feux de circulation -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-traffic-light me-2"></i>État des Feux de Circulation
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="traffic-light-container">
+                            <h5 class="text-center">Nord-Sud</h5>
+                            <div class="traffic-lights d-flex justify-content-center">
+                                <div class="traffic-light">
+                                    <div class="light red" id="ns-red"></div>
+                                    <div class="light orange" id="ns-orange"></div>
+                                    <div class="light green" id="ns-green"></div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                État: <span id="ns-state">Rouge</span><br>
+                                Temps restant: <span id="ns-timer">0</span>s<br>
+                                Durée vert: <span id="ns-green-time">10</span>s
+                            </div>
+                            <div class="density-indicator mt-3">
+                                <div class="progress" style="height: 20px;">
+                                    <div id="ns-density" class="progress-bar bg-warning" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small>Densité du trafic</small>
+                                    <small>Total: <span id="ns-total-count">0</span> véhicules</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="traffic-light-container">
+                            <h5 class="text-center">Est-Ouest</h5>
+                            <div class="traffic-lights d-flex justify-content-center">
+                                <div class="traffic-light">
+                                    <div class="light red" id="ew-red"></div>
+                                    <div class="light orange" id="ew-orange"></div>
+                                    <div class="light green" id="ew-green"></div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                État: <span id="ew-state">Vert</span><br>
+                                Temps restant: <span id="ew-timer">0</span>s<br>
+                                Durée vert: <span id="ew-green-time">10</span>s
+                            </div>
+                            <div class="density-indicator mt-3">
+                                <div class="progress" style="height: 20px;">
+                                    <div id="ew-density" class="progress-bar bg-warning" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small>Densité du trafic</small>
+                                    <small>Total: <span id="ew-total-count">0</span> véhicules</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="regulation-info p-3 border rounded bg-light">
+                            <h6><i class="fas fa-info-circle me-2"></i>Régulation des feux</h6>
+                            <p class="mb-0 small">
+                                La durée des feux verts est automatiquement ajustée selon la densité du trafic dans chaque direction. 
+                                <span id="regulation-explanation">En attente des données...</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detection-table">
+            <div class="table-header">
+                <div>
+                    <i class="fas fa-table me-2"></i>Dernières Détections
+                </div>
+                <a href="/static/resultats.csv" download class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-download me-1"></i>Télécharger CSV
+                </a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Direction</th>
+                            <th>ID</th>
+                            <th>Vitesse</th>
+                            <th>Heure</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable">
+                        <!-- Rempli dynamiquement par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <div class="footer">
+        <div class="container">
+            <p class="mb-0">Système de Surveillance de Carrefour - Analyse Vidéo en Temps Réel © 2025</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Variables
+            let videoStates = {
+                'nord': false,
+                'sud': false,
+                'est': false,
+                'ouest': false
+            };
+            let dataRefreshInterval;
+            
+            // Mettre à jour l'heure
+            function updateTime() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                $("#currentTime").text(`${hours}:${minutes}:${seconds}`);
+            }
+            
+            // Mettre à jour l'heure toutes les secondes
+            setInterval(updateTime, 1000);
+            updateTime();
+            
+            // Afficher une notification toast
+            function showToast(message, type = 'success') {
+                const toastId = 'toast-' + Date.now();
+                const toastHTML = `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+                
+                $('.toast-container').append(toastHTML);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, {
+                    delay: 3000
+                });
+                toast.show();
+                
+                // Supprimer le toast après qu'il se soit fermé
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    $(this).remove();
+                });
+            }
+            
+            // Vérifier les vidéos au chargement
+            $.ajax({
+                url: '/check_videos',
+                success: function(data) {
+                    let allVideosExist = true;
+                    for (const [direction, exists] of Object.entries(data.video_status)) {
+                        if (!exists) {
+                            allVideosExist = false;
+                            showToast(`ATTENTION: La vidéo ${direction} est manquante!`, 'warning');
+                        }
+                    }
+                    
+                    if (allVideosExist) {
+                        showToast('Toutes les vidéos sont disponibles. Démarrage automatique...', 'info');
+                        // Démarrer automatiquement le traitement
+                        startProcessing();
+                    }
+                }
+            });
+            
+            // Fonction pour démarrer le traitement
+            function startProcessing() {
+                $('#loadingOverlay').addClass('active');
+                
+                $.ajax({
+                    url: '/start_processing',
+                    success: function(response) {
+                        setTimeout(function() {
+                            $('#loadingOverlay').removeClass('active');
+                        }, 1000);
+                        
+                        showToast('Traitement démarré automatiquement', 'success');
+                        
+                        // Activer toutes les vidéos
+                        for (const direction in videoStates) {
+                            videoStates[direction] = true;
+                            updateVideoStatus(direction, true);
+                        }
+                        
+                        $('#statusDot').addClass('status-active').removeClass('status-inactive');
+                        $('#statusText').text('Actif');
+                        
+                        // Actualiser les données toutes les secondes
+                        if (!dataRefreshInterval) {
+                            dataRefreshInterval = setInterval(refreshData, 1000);
+                        }
+                    },
+                    error: function() {
+                        $('#loadingOverlay').removeClass('active');
+                        showToast('Erreur lors du démarrage du traitement', 'danger');
+                    }
+                });
+            }
+            
+            // Mettre à jour visuellement l'état de la vidéo
+            function updateVideoStatus(direction, isActive) {
+                const statusEl = $(`#info-${direction} .video-status`);
+                if (isActive) {
+                    statusEl.addClass('active').text('Actif');
+                } else {
+                    statusEl.removeClass('active').text('Inactif');
+                }
+            }
+            
+            // Déterminer la classe de couleur en fonction de la vitesse
+            function getSpeedClass(speed) {
+                speed = parseFloat(speed);
+                if (speed < 30) return 'speed-low';
+                if (speed < 70) return 'speed-medium';
+                return 'speed-high';
+            }
+            
+            // Mettre à jour les feux de circulation
+            function updateTrafficLights(data) {
+                // Réinitialiser toutes les lumières
+                $('.light').removeClass('active');
+                
+                // Mettre à jour feux Nord-Sud
+                const nsState = data.feux['nord-sud'].etat;
+                $('#ns-state').text(nsState.charAt(0).toUpperCase() + nsState.slice(1));
+                $('#ns-timer').text(data.feux['nord-sud'].timer);
+                $('#ns-green-time').text(data.feux['nord-sud'].temps_vert);
+                
+                // Activer la bonne lumière pour Nord-Sud
+                if (nsState === 'rouge') {
+                    $('#ns-red').addClass('active');
+                } else if (nsState === 'orange') {
+                    $('#ns-orange').addClass('active');
+                } else if (nsState === 'vert') {
+                    $('#ns-green').addClass('active');
+                }
+                
+                // Mettre à jour feux Est-Ouest
+                const ewState = data.feux['est-ouest'].etat;
+                $('#ew-state').text(ewState.charAt(0).toUpperCase() + ewState.slice(1));
+                $('#ew-timer').text(data.feux['est-ouest'].timer);
+                $('#ew-green-time').text(data.feux['est-ouest'].temps_vert);
+                
+                // Activer la bonne lumière pour Est-Ouest
+                if (ewState === 'rouge') {
+                    $('#ew-red').addClass('active');
+                } else if (ewState === 'orange') {
+                    $('#ew-orange').addClass('active');
+                } else if (ewState === 'vert') {
+                    $('#ew-green').addClass('active');
+                }
+                
+                // Calculer et afficher la densité du trafic
+                const nordCount = data.detection.nord.count || 0;
+                const sudCount = data.detection.sud.count || 0;
+                const estCount = data.detection.est.count || 0;
+                const ouestCount = data.detection.ouest.count || 0;
+                
+                const totalNS = nordCount + sudCount;
+                const totalEO = estCount + ouestCount;
+                const totalVehicles = totalNS + totalEO;
+                
+                // Calculer le pourcentage pour les barres de progression (max 100%)
+                const nsPercentage = totalVehicles > 0 ? Math.min(100, Math.round((totalNS / totalVehicles) * 100)) : 0;
+                const ewPercentage = totalVehicles > 0 ? Math.min(100, Math.round((totalEO / totalVehicles) * 100)) : 0;
+                
+                // Mettre à jour les barres de progression
+                $('#ns-density').css('width', nsPercentage + '%').attr('aria-valuenow', nsPercentage).text(nsPercentage + '%');
+                $('#ew-density').css('width', ewPercentage + '%').attr('aria-valuenow', ewPercentage).text(ewPercentage + '%');
+                
+                // Changer la couleur des barres en fonction de la densité
+                if (nsPercentage > 66) {
+                    $('#ns-density').removeClass('bg-warning bg-success').addClass('bg-danger');
+                } else if (nsPercentage > 33) {
+                    $('#ns-density').removeClass('bg-danger bg-success').addClass('bg-warning');
+                } else {
+                    $('#ns-density').removeClass('bg-danger bg-warning').addClass('bg-success');
+                }
+                
+                if (ewPercentage > 66) {
+                    $('#ew-density').removeClass('bg-warning bg-success').addClass('bg-danger');
+                } else if (ewPercentage > 33) {
+                    $('#ew-density').removeClass('bg-danger bg-success').addClass('bg-warning');
+                } else {
+                    $('#ew-density').removeClass('bg-danger bg-warning').addClass('bg-success');
+                }
+                
+                // Afficher les totaux
+                $('#ns-total-count').text(totalNS);
+                $('#ew-total-count').text(totalEO);
+                
+                // Expliquer la régulation en cours
+                let explanation = '';
+                if (totalNS > totalEO * 1.5) {
+                    explanation = `Le trafic Nord-Sud (${totalNS}) est beaucoup plus dense que Est-Ouest (${totalEO}), les feux verts Nord-Sud sont prolongés.`;
+                } else if (totalEO > totalNS * 1.5) {
+                    explanation = `Le trafic Est-Ouest (${totalEO}) est beaucoup plus dense que Nord-Sud (${totalNS}), les feux verts Est-Ouest sont prolongés.`;
+                } else if (Math.abs(totalNS - totalEO) < 5) {
+                    explanation = `Le trafic est équilibré entre Nord-Sud (${totalNS}) et Est-Ouest (${totalEO}), durées de feux standards.`;
+                } else if (totalNS > totalEO) {
+                    explanation = `Le trafic Nord-Sud (${totalNS}) est légèrement supérieur à Est-Ouest (${totalEO}), légère priorité aux feux Nord-Sud.`;
+                } else {
+                    explanation = `Le trafic Est-Ouest (${totalEO}) est légèrement supérieur à Nord-Sud (${totalNS}), légère priorité aux feux Est-Ouest.`;
+                }
+                
+                $('#regulation-explanation').text(explanation);
+            }
+            
+            // Rafraîchir les données
+            function refreshData() {
+                // Vérifier si au moins une vidéo est active
+                const anyActive = Object.values(videoStates).some(state => state);
+                if (!anyActive) return;
+                
+                $.ajax({
+                    url: '/get_stats',
+                    success: function(data) {
+                        // Mettre à jour le compteur total
+                        $('#totalCounter').text(data.total);
+                        
+                        // Mettre à jour les compteurs par direction
+                        $('#northCounter').text(data.stats.nord);
+                        $('#southCounter').text(data.stats.sud);
+                        $('#eastCounter').text(data.stats.est);
+                        $('#westCounter').text(data.stats.ouest);
+                        
+                        // Mettre à jour les infos des vidéos
+                        for (const direction of ['nord', 'sud', 'est', 'ouest']) {
+                            if (videoStates[direction]) {
+                                const count = data.stats[direction] || 0;
+                                const activeCount = data.active_counts[direction] || 0;
+                                
+                                // Format: "5 objets (2 actifs)"
+                                $(`#info-${direction} .video-objects`).text(`${count} objets (${activeCount} actifs)`);
+                            }
+                        }
+                        
+                        // Mettre à jour les compteurs d'actifs
+                        if (data.active_counts) {
+                            $('#northActive').text(data.active_counts.nord);
+                            $('#southActive').text(data.active_counts.sud);
+                            $('#eastActive').text(data.active_counts.est);
+                            $('#westActive').text(data.active_counts.ouest);
+                        }
+                        
+                        // Mettre à jour les vitesses moyennes
+                        if(data.speeds) {
+                            $('#northSpeed').text(data.speeds.nord.toFixed(1));
+                            $('#southSpeed').text(data.speeds.sud.toFixed(1));
+                            $('#eastSpeed').text(data.speeds.est.toFixed(1));
+                            $('#westSpeed').text(data.speeds.ouest.toFixed(1));
+                        }
+                        
+                        // Charger les données CSV pour le tableau
+                        $.ajax({
+                            url: '/static/resultats.csv',
+                            dataType: 'text',
+                            cache: false,
+                            success: function(csvData) {
+                                updateDataTable(csvData);
+                            }
+                        });
+                        
+                        // Récupérer et mettre à jour l'état des feux de circulation
+                        $.ajax({
+                            url: '/get_traffic_state',
+                            cache: false,
+                            success: function(trafficData) {
+                                updateTrafficLights(trafficData);
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Mettre à jour le tableau de données
+            function updateDataTable(csvData) {
+                $('#dataTable').empty();
+                
+                if (!csvData || csvData.trim() === '') return;
+                
+                const lines = csvData.split('\n');
+                if (lines.length <= 1) return;
+                
+                const maxEntries = 15;
+                const startIdx = Math.max(1, lines.length - maxEntries);
+                
+                for (let i = lines.length - 1; i >= startIdx; i--) {
+                    if (!lines[i] || lines[i].trim() === '') continue;
+                    
+                    const columns = lines[i].split(',');
+                    if (columns.length >= 4) {
+                        const direction = columns[0];
+                        const id = columns[1];
+                        const vitesse = parseFloat(columns[3]).toFixed(1);
+                        const timestamp = columns[6] || '';
+                        const time = timestamp.split(' ')[1] || '';
+                        
+                        const badgeClass = `badge-${direction.toLowerCase()}`;
+                        const speedClass = getSpeedClass(vitesse);
+                        
+                        let directionIcon = '';
+                        switch(direction.toLowerCase()) {
+                            case 'nord': directionIcon = '<i class="fas fa-arrow-down"></i>'; break;
+                            case 'sud': directionIcon = '<i class="fas fa-arrow-up"></i>'; break;
+                            case 'est': directionIcon = '<i class="fas fa-arrow-right"></i>'; break;
+                            case 'ouest': directionIcon = '<i class="fas fa-arrow-left"></i>'; break;
+                        }
+                        
+                        const row = `
+                            <tr>
+                                <td>
+                                    <span class="direction-badge ${badgeClass}">
+                                        ${directionIcon} ${direction}
+                                    </span>
+                                </td>
+                                <td>#${id}</td>
+                                <td><span class="speed-badge ${speedClass}">${vitesse} km/h</span></td>
+                                <td>${time}</td>
+                            </tr>
+                        `;
+                        
+                        $('#dataTable').append(row);
+                    }
+                }
+            }
+            
+            // Initialiser le statut
+            $('#statusDot').addClass('status-inactive');
+            
+            // Appel initial pour les données
+            refreshData();
+        });
+    </script>
+</body>
+</html> 

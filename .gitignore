@@ -1,0 +1,181 @@
+# Python
+venv/
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+__pycache__/
+*.pyc
+
+# Virtual environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Install logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter
+.ipynb_checkpoints
+jupyterlab-workspace/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs, databases, temp
+*.log
+*.sqlite3
+*.db
+tmp/
+temp/
+*.tmp
+
+# Large media, models, datasets
+/static/videos/
+/static/*.mp4
+/static/*.avi
+/static/*.mov
+/static/*.mkv
+*.h5
+*.pt
+*.pth
+*.ckpt
+models/
+weights/
+data/
+datasets/
+*.npy
+
+# Compiled / binary
+*.so
+*.dll
+*.pyd
+
+# Secrets and env config
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+
+# Misc
+coverage.xml
+nosetests.xml
+```# filepath: e:\M2\Introduction_IA_DATA\PROJET_FINAL_HERMINE_&_KOUAME_FELIX\Application_gestion_Traffic_Routier\.gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Install logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter
+.ipynb_checkpoints
+jupyterlab-workspace/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs, databases, temp
+*.log
+*.sqlite3
+*.db
+tmp/
+temp/
+*.tmp
+
+# Large media, models, datasets
+/static/videos/
+/static/*.mp4
+/static/*.avi
+/static/*.mov
+/static/*.mkv
+*.h5
+*.pt
+*.pth
+*.ckpt
+models/
+weights/
+data/
+datasets/
+*.npy
+
+# Compiled / binary
+*.so
+*.dll
+*.pyd
+
+# Secrets and env config
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+
+# Misc
+coverage.xml
+nosetests.xml
